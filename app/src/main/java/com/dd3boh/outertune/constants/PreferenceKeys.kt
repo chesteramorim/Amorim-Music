@@ -77,6 +77,7 @@ val LastRecentActivitySyncKey = longPreferencesKey("lastRecentActivitySync")
 val AudioDecoderKey = intPreferencesKey("audioDecoder")
 val AudioQualityKey = stringPreferencesKey("audioQuality")
 val DownloadAudioQualityKey = stringPreferencesKey("downloadAudioQuality")
+val DownloadAudioCodecKey = stringPreferencesKey("downloadAudioCodec")
 val AudioOffloadKey = booleanPreferencesKey("enableOffload")
 
 /**
