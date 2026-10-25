@@ -25,6 +25,8 @@ import com.dd3boh.outertune.R
 import com.dd3boh.outertune.constants.AudioQuality
 import com.dd3boh.outertune.constants.AudioQualityKey
 import com.dd3boh.outertune.constants.DownloadAudioQuality
+import com.dd3boh.outertune.constants.DownloadAudioCodec
+import com.dd3boh.outertune.constants.DownloadAudioCodecKey
 import com.dd3boh.outertune.constants.DownloadAudioQualityKey
 import com.dd3boh.outertune.constants.DownloadExtraPathKey
 import com.dd3boh.outertune.constants.DownloadOnWifiOnlyKey
@@ -108,6 +110,7 @@ class DownloadUtil @Inject constructor(
     private val connectivityManager = context.getSystemService<ConnectivityManager>()!!
     private val playbackAudioQuality by enumPreference(context, AudioQualityKey, AudioQuality.AUTO)
     private val downloadAudioQuality by enumPreference(context, DownloadAudioQualityKey, DownloadAudioQuality.FOLLOW_PLAYBACK)
+    private val downloadAudioCodec by enumPreference(context, DownloadAudioCodecKey, DownloadAudioCodec.AUTO)
     private val audioQuality: AudioQuality
         get() = downloadAudioQuality.resolve(playbackAudioQuality)
     // Concurrent, because media3 runs each download on its own thread and this is read and written
@@ -202,7 +205,15 @@ class DownloadUtil @Inject constructor(
             StandIns(
                 resolve = { id ->
                     paced()
-                    YTPlayerUtils.playerResponseForPlayback(id, audioQuality = audioQuality, connectivityManager = connectivityManager)
+                    val preferredMime = downloadAudioCodec.mimePrefix
+                    val preferred = YTPlayerUtils.playerResponseForPlayback(
+                        id, audioQuality = audioQuality, connectivityManager = connectivityManager,
+                        preferredMime = preferredMime,
+                    )
+                    if (preferred.isSuccess || preferredMime == null) preferred
+                    else YTPlayerUtils.playerResponseForPlayback(
+                        id, audioQuality = audioQuality, connectivityManager = connectivityManager,
+                    )
                 },
                 wanted = { id ->
                     database.readOrNull { songRow(id) }?.let { row ->
