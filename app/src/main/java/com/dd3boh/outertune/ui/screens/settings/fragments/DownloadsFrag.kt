@@ -53,6 +53,8 @@ import com.dd3boh.outertune.constants.DownloadExtraPathKey
 import com.dd3boh.outertune.constants.DownloadPathKey
 import com.dd3boh.outertune.constants.DownloadOnWifiOnlyKey
 import com.dd3boh.outertune.constants.DownloadAudioQuality
+import com.dd3boh.outertune.constants.DownloadAudioCodec
+import com.dd3boh.outertune.constants.DownloadAudioCodecKey
 import com.dd3boh.outertune.constants.DownloadAudioQualityKey
 import com.dd3boh.outertune.constants.ScanPathsKey
 import com.dd3boh.outertune.constants.ThumbnailCornerRadius
@@ -113,6 +115,9 @@ fun ColumnScope.DownloadsFrag() {
     val (downloadAudioQuality, onDownloadAudioQualityChange) =
         rememberEnumPreference(DownloadAudioQualityKey, DownloadAudioQuality.FOLLOW_PLAYBACK)
 
+    val (downloadAudioCodec, onDownloadAudioCodecChange) =
+        rememberEnumPreference(DownloadAudioCodecKey, DownloadAudioCodec.AUTO)
+
     // size stats
     var downloadCacheSize by remember {
         mutableLongStateOf(tryOrNull { downloadCache?.cacheSpace } ?: 0)
@@ -167,6 +172,20 @@ fun ColumnScope.DownloadsFrag() {
             }
         }
     )
+    EnumListPreference(
+        title = { Text("Codec preferido para downloads") },
+        icon = { Icon(Icons.Rounded.HighQuality, null) },
+        selectedValue = downloadAudioCodec,
+        onValueSelected = onDownloadAudioCodecChange,
+        valueText = {
+            when (it) {
+                DownloadAudioCodec.AUTO -> "Automático (recomendado)"
+                DownloadAudioCodec.OPUS -> "Opus (WebM)"
+                DownloadAudioCodec.AAC -> "AAC (M4A)"
+            }
+        }
+    )
+    InfoLabel("Se o codec escolhido não estiver disponível, o aplicativo tentará a seleção automática. Vale apenas para novos downloads.")
     InfoLabel("A escolha vale para novos downloads. Para mudar a qualidade de músicas já baixadas, remova o download e baixe novamente.")
 
     SwitchPreference(
