@@ -388,6 +388,9 @@ enum class SeekIncrement(val millisec: Int, val second: Int) {
 
     }
 }
+/** Independent offline quality. FOLLOW_PLAYBACK preserves existing installations. */
+enum class DownloadAudioQuality { FOLLOW_PLAYBACK, MAX, AUTO, HIGH, LOW }
+
 enum class AudioQuality {
     /**
      * The largest stream on offer, whatever it costs.
