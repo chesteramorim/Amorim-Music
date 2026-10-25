@@ -109,13 +109,7 @@ class DownloadUtil @Inject constructor(
     private val playbackAudioQuality by enumPreference(context, AudioQualityKey, AudioQuality.AUTO)
     private val downloadAudioQuality by enumPreference(context, DownloadAudioQualityKey, DownloadAudioQuality.FOLLOW_PLAYBACK)
     private val audioQuality: AudioQuality
-        get() = when (downloadAudioQuality) {
-            DownloadAudioQuality.FOLLOW_PLAYBACK -> playbackAudioQuality
-            DownloadAudioQuality.MAX -> AudioQuality.MAX
-            DownloadAudioQuality.AUTO -> AudioQuality.AUTO
-            DownloadAudioQuality.HIGH -> AudioQuality.HIGH
-            DownloadAudioQuality.LOW -> AudioQuality.LOW
-        }
+        get() = downloadAudioQuality.resolve(playbackAudioQuality)
     // Concurrent, because media3 runs each download on its own thread and this is read and written
     // from all of them. An unsynchronised HashMap can corrupt its table under concurrent put.
     private val songUrlCache = java.util.concurrent.ConcurrentHashMap<String, Pair<String, Long>>()
