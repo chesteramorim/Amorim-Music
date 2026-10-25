@@ -52,6 +52,8 @@ import com.dd3boh.outertune.R
 import com.dd3boh.outertune.constants.DownloadExtraPathKey
 import com.dd3boh.outertune.constants.DownloadPathKey
 import com.dd3boh.outertune.constants.DownloadOnWifiOnlyKey
+import com.dd3boh.outertune.constants.DownloadAudioQuality
+import com.dd3boh.outertune.constants.DownloadAudioQualityKey
 import com.dd3boh.outertune.constants.ScanPathsKey
 import com.dd3boh.outertune.constants.ThumbnailCornerRadius
 import com.dd3boh.outertune.extensions.tryOrNull
@@ -74,6 +76,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.HighQuality
 import com.dd3boh.outertune.constants.LikedAutoDownloadKey
 import com.dd3boh.outertune.constants.LikedAutodownloadMode
 import com.dd3boh.outertune.playback.DownloadUtil
@@ -106,6 +109,9 @@ fun ColumnScope.DownloadsFrag() {
     val (scanPaths, onScanPathsChange) = rememberPreference(ScanPathsKey, defaultValue = "")
     val (likedAutodownload, onLikedAutodownloadChange) =
         rememberEnumPreference(LikedAutoDownloadKey, LikedAutodownloadMode.OFF)
+
+    val (downloadAudioQuality, onDownloadAudioQualityChange) =
+        rememberEnumPreference(DownloadAudioQualityKey, DownloadAudioQuality.FOLLOW_PLAYBACK)
 
     // size stats
     var downloadCacheSize by remember {
@@ -145,6 +151,23 @@ fun ColumnScope.DownloadsFrag() {
             downloadCacheSize = tryOrNull { downloadCache?.cacheSpace } ?: 0
         }
     }
+
+    EnumListPreference(
+        title = { Text("Qualidade dos downloads") },
+        icon = { Icon(Icons.Rounded.HighQuality, null) },
+        selectedValue = downloadAudioQuality,
+        onValueSelected = onDownloadAudioQualityChange,
+        valueText = {
+            when (it) {
+                DownloadAudioQuality.FOLLOW_PLAYBACK -> "Seguir qualidade da reprodução"
+                DownloadAudioQuality.MAX -> stringResource(R.string.audio_quality_max)
+                DownloadAudioQuality.AUTO -> stringResource(R.string.audio_quality_auto)
+                DownloadAudioQuality.HIGH -> stringResource(R.string.audio_quality_high)
+                DownloadAudioQuality.LOW -> stringResource(R.string.audio_quality_low)
+            }
+        }
+    )
+    InfoLabel("A escolha vale para novos downloads. Para mudar a qualidade de músicas já baixadas, remova o download e baixe novamente.")
 
     SwitchPreference(
         title = { Text(stringResource(R.string.download_on_wifi_only_title)) },
