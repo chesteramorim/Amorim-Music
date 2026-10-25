@@ -18,6 +18,15 @@ class DownloadAudioQualityTest {
     }
 
     @Test
+    fun `all download modes resolve to a valid audio quality`() {
+        DownloadAudioQuality.entries.forEach { download ->
+            AudioQuality.entries.forEach { playback ->
+                assertEquals(true, download.resolve(playback) in AudioQuality.entries)
+            }
+        }
+    }
+
+    @Test
     fun `explicit offline quality is independent of playback`() {
         val cases = mapOf(
             DownloadAudioQuality.MAX to AudioQuality.MAX,
