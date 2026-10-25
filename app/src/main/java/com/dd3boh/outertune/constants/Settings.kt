@@ -389,6 +389,11 @@ enum class SeekIncrement(val millisec: Int, val second: Int) {
     }
 }
 /** Independent offline quality. FOLLOW_PLAYBACK preserves existing installations. */
+/** Preferred codec for newly resolved downloads; AUTO keeps the source's normal selection. */
+enum class DownloadAudioCodec(val mimePrefix: String?) {
+    AUTO(null), OPUS("audio/webm"), AAC("audio/mp4")
+}
+
 enum class DownloadAudioQuality {
     FOLLOW_PLAYBACK, MAX, AUTO, HIGH, LOW;
 
