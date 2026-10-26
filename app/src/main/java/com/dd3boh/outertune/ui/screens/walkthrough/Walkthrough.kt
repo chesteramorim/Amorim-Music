@@ -225,7 +225,7 @@ val SETTINGS_CLOSER_LOOK = listOf(
     // The sentence the welcome back page's own tour has for it, which already says what it does.
 
     closer("auto_load_more", Tour.SETTING_AUTO_LOAD_MORE, Tour.ROUTE_PLAYER, R.string.auto_load_more, R.string.tour_closer_auto_load_more),
-    closer("audio_quality", Tour.SETTING_AUDIO_QUALITY, Tour.ROUTE_PLAYER, R.string.audio_quality, R.string.tour_closer_audio_quality),
+    closer("audio_quality", Tour.SETTING_AUDIO_QUALITY, Tour.ROUTE_PLAYER, R.string.audio_quality_now, R.string.tour_closer_audio_quality),
     closer("transition_fade", Tour.SETTING_TRANSITION_FADE, Tour.ROUTE_PLAYER, R.string.transition_fade, R.string.tour_closer_transition_fade),
     closer("spatial_audio", Tour.SETTING_SPATIAL_AUDIO, Tour.ROUTE_PLAYER, R.string.spatial_audio, R.string.tour_closer_spatial_audio),
     closer("head_tracking", Tour.SETTING_HEAD_TRACKING, Tour.ROUTE_PLAYER, R.string.head_tracking, R.string.tour_closer_head_tracking),
