@@ -92,7 +92,6 @@ import com.dd3boh.outertune.constants.SeekIncrementKey
 import com.dd3boh.outertune.constants.SkipOnErrorKey
 import com.dd3boh.outertune.constants.SkipSilenceKey
 import com.dd3boh.outertune.constants.ResumeOnBluetoothKey
-import com.dd3boh.outertune.constants.StopMusicOnTaskClearKey
 import com.dd3boh.outertune.constants.SleepTimerDefaults
 import com.dd3boh.outertune.constants.SleepTimerFadeDurationKey
 import com.dd3boh.outertune.constants.ShareAudioFocusKey
@@ -916,11 +915,6 @@ fun LoudnessRepairEntry() {
 fun ColumnScope.PlaybackBehaviourFrag() {
     val keepAlive by rememberPreference(key = KeepAliveKey, defaultValue = false)
     val (skipOnErrorKey, onSkipOnErrorChange) = rememberPreference(key = SkipOnErrorKey, defaultValue = false)
-    val (stopMusicOnTaskClear, onStopMusicOnTaskClearChange) = rememberPreference(
-        key = StopMusicOnTaskClearKey,
-        defaultValue = false
-    )
-
     val (shareAudioFocus, onShareAudioFocusChange) = rememberPreference(
         key = ShareAudioFocusKey,
         defaultValue = false
@@ -948,14 +942,6 @@ fun ColumnScope.PlaybackBehaviourFrag() {
         icon = { Icon(Icons.Rounded.SkipNext, null) },
         checked = skipOnErrorKey,
         onCheckedChange = onSkipOnErrorChange
-    )
-    SwitchPreference(
-        title = { Text(stringResource(R.string.stop_music_on_task_clear)) },
-        description = stringResource(R.string.stop_music_on_task_clear_description),
-        icon = { Icon(Icons.Rounded.ClearAll, null) },
-        isEnabled = !keepAlive,
-        checked = stopMusicOnTaskClear,
-        onCheckedChange = onStopMusicOnTaskClearChange,
     )
     // The caveats moved behind the i button. A row description is a label, not a paragraph.
     ExplainedSwitchPreference(
