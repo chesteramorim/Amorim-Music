@@ -161,7 +161,7 @@ fun ColumnScope.BackupAndRestoreFrag(viewModel: BackupRestoreViewModel) {
 
     // Manual operations use the Android document picker without a retained app login.
     // Automatic backups intentionally keep a folder grant until the user revokes it.
-    InfoLabel("Privacidade: backups manuais usam o seletor de arquivos do Android, sem guardar sua senha. O backup automático mantém uma permissão de pasta até você removê-la.")
+    InfoLabel("Privacidade: você escolhe onde salvar ou restaurar o arquivo pelo Android, inclusive em serviços de nuvem disponíveis no aparelho. Não é necessário conectar sua conta ao Amorim Music. O backup ainda não tem criptografia própria: proteja o arquivo e evite pastas compartilhadas. O backup automático mantém acesso à pasta escolhida até você desconectá-la.")
     Spacer(modifier = Modifier.height(12.dp))
 
     // Automatic backups. Inert until the switch is on and a folder is chosen: AutoBackup.schedule
