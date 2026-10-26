@@ -657,12 +657,24 @@ class CastServerTest {
         }
 
         server.stop()
+        assertFalse("Server must report stopped", server.isRunning)
+        // Closing a listening socket can race with a connection already in the OS accept
+        // backlog. Check that both listeners stay unreachable, rather than treating a
+        // single just-after-close handshake as proof the server is still listening.
         for (host in listOf("127.0.0.1", "127.0.0.2")) {
-            try {
-                Socket().use { it.connect(InetSocketAddress(host, port), 2000) }
-                fail("Still listening on $host after stop")
-            } catch (expected: IOException) {
+            var refusedConsecutively = 0
+            val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2)
+            while (System.nanoTime() < deadline && refusedConsecutively < 3) {
+                val connected = try {
+                    Socket().use { it.connect(InetSocketAddress(host, port), 250) }
+                    true
+                } catch (expected: IOException) {
+                    false
+                }
+                refusedConsecutively = if (connected) 0 else refusedConsecutively + 1
+                Thread.sleep(25)
             }
+            assertEquals("Still listening on $host after stop", 3, refusedConsecutively)
         }
     }
 
