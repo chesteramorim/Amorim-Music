@@ -53,6 +53,8 @@ import com.dd3boh.outertune.constants.DownloadExtraPathKey
 import com.dd3boh.outertune.constants.DownloadPathKey
 import com.dd3boh.outertune.constants.DownloadOnWifiOnlyKey
 import com.dd3boh.outertune.constants.DownloadAudioQuality
+import com.dd3boh.outertune.constants.AudioQuality
+import com.dd3boh.outertune.constants.AudioQualityKey
 import com.dd3boh.outertune.constants.DownloadAudioCodec
 import com.dd3boh.outertune.constants.DownloadAudioCodecKey
 import com.dd3boh.outertune.constants.DownloadAudioQualityKey
@@ -112,6 +114,8 @@ fun ColumnScope.DownloadsFrag() {
     val (likedAutodownload, onLikedAutodownloadChange) =
         rememberEnumPreference(LikedAutoDownloadKey, LikedAutodownloadMode.OFF)
 
+    val (playbackAudioQuality, onPlaybackAudioQualityChange) =
+        rememberEnumPreference(AudioQualityKey, AudioQuality.AUTO)
     val (downloadAudioQuality, onDownloadAudioQualityChange) =
         rememberEnumPreference(DownloadAudioQualityKey, DownloadAudioQuality.FOLLOW_PLAYBACK)
 
@@ -157,7 +161,23 @@ fun ColumnScope.DownloadsFrag() {
         }
     }
 
-    InfoLabel("QUALIDADE DE ÁUDIO E REDE • Configure a qualidade, o formato e a conexão usada para baixar músicas.")
+    InfoLabel("QUALIDADE DE ÁUDIO E REDE • Reprodução online, downloads, codec e conexão em um só lugar.")
+
+    EnumListPreference(
+        title = { Text("Qualidade da reprodução online") },
+        icon = { Icon(Icons.Rounded.HighQuality, null) },
+        selectedValue = playbackAudioQuality,
+        onValueSelected = onPlaybackAudioQualityChange,
+        valueText = {
+            when (it) {
+                AudioQuality.MAX -> stringResource(R.string.audio_quality_max)
+                AudioQuality.AUTO -> stringResource(R.string.audio_quality_auto)
+                AudioQuality.HIGH -> stringResource(R.string.audio_quality_high)
+                AudioQuality.LOW -> stringResource(R.string.audio_quality_low)
+            }
+        }
+    )
+    InfoLabel("Máxima usa a melhor qualidade disponível na fonte, inclusive nos dados móveis. Não significa necessariamente 320 kbps.")
 
     EnumListPreference(
         title = { Text("Qualidade dos downloads") },
