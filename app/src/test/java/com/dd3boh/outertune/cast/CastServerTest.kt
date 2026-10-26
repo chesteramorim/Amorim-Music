@@ -502,22 +502,32 @@ class CastServerTest {
             FakeSource("a" to FakeSong(100_000, gate = gate)), loopback, { true }, maxConnections = 1, maxPerPeer = 100,
         ).also { servers += it; it.start() }
         val held = get(server.url("a"))
-        // Each is refused and then waited on for a moment, since it never closes; twelve of them one
-        // after another took the accept loop three seconds.
+        // Measure each phase separately to distinguish a slow release from accept-loop
+        // starvation. Keep the original 1500 ms performance requirement unchanged.
+        val burstStarted = System.nanoTime()
         val silent = List(12) { Socket("127.0.0.1", server.boundPort) }
+        val burstMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - burstStarted)
         try {
             Thread.sleep(200)
+            val releaseStarted = System.nanoTime()
             gate.countDown()
             held.use { assertEquals(100_000, it.body!!.bytes().size) }
+            val releaseMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - releaseStarted)
             val started = System.nanoTime()
             var code = 0
+            var attempts = 0
+            var lastCode = 0
             while (code != 200 && System.nanoTime() - started < 5_000_000_000L) {
+                attempts++
                 code = get(server.url("a")).use { it.code }
+                lastCode = code
                 if (code != 200) Thread.sleep(20)
             }
-            val elapsedMs = (System.nanoTime() - started) / 1_000_000
-            assertEquals(200, code)
-            assertTrue("answered after $elapsedMs ms", elapsedMs < 1_500)
+            val elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started)
+            val diagnostics = "burst=${burstMs}ms, release=${releaseMs}ms, next=${elapsedMs}ms, attempts=$attempts, lastStatus=$lastCode"
+            println("CastServer burst diagnostics: $diagnostics")
+            assertEquals("Expected HTTP 200; $diagnostics", 200, code)
+            assertTrue("Next connection too slow; $diagnostics", elapsedMs < 1_500)
         } finally {
             silent.forEach { runCatching { it.close() } }
         }
