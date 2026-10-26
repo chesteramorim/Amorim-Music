@@ -533,7 +533,8 @@ class CastServerTest {
             }
             val elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started)
             val diagnostics = "burst=${burstMs}ms, release=${releaseMs}ms, next=${elapsedMs}ms, attempts=$attempts, lastStatus=$lastCode"
-            println("CastServer burst diagnostics: $diagnostics")
+            // stderr is retained alongside assertion failures in Gradle XML reports.
+            System.err.println("CastServer burst diagnostics: $diagnostics")
             assertEquals("Expected HTTP 200; $diagnostics", 200, code)
             assertTrue("Next connection too slow; $diagnostics", elapsedMs < 1_500)
         } finally {
