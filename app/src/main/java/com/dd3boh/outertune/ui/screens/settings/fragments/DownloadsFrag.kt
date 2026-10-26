@@ -157,6 +157,8 @@ fun ColumnScope.DownloadsFrag() {
         }
     }
 
+    InfoLabel("QUALIDADE DE ÁUDIO E REDE • Configure a qualidade, o formato e a conexão usada para baixar músicas.")
+
     EnumListPreference(
         title = { Text("Qualidade dos downloads") },
         icon = { Icon(Icons.Rounded.HighQuality, null) },
@@ -185,12 +187,11 @@ fun ColumnScope.DownloadsFrag() {
             }
         }
     )
-    InfoLabel("Se o codec escolhido não estiver disponível, o aplicativo tentará a seleção automática. Vale apenas para novos downloads.")
-    InfoLabel("A escolha vale para novos downloads. Para mudar a qualidade de músicas já baixadas, remova o download e baixe novamente.")
+    InfoLabel("O aplicativo tentará usar o codec escolhido. Se ele não estiver disponível, usará a seleção automática. Para trocar o formato ou a qualidade de uma música já baixada, remova o download e baixe novamente.")
 
     SwitchPreference(
-        title = { Text(stringResource(R.string.download_on_wifi_only_title)) },
-        description = stringResource(R.string.download_on_wifi_only_description),
+        title = { Text("Baixar somente por Wi-Fi") },
+        description = "Ativado: aguarda Wi-Fi. Desativado: permite baixar por Wi-Fi ou dados móveis.",
         icon = { Icon(Icons.Rounded.Wifi, null) },
         checked = downloadOnWifiOnly,
         onCheckedChange = {
