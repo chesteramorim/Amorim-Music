@@ -32,6 +32,16 @@ jobs:
       - name: Build debug APK and run jvm tests
         run: ./gradlew --no-configuration-cache --max-workers=2 assembleCoreDebug lintCoreDebug testCoreDebugUnitTest --stacktrace -DskipFormatKtlint
 
+      - name: Upload unit-test reports even if tests fail
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: |
+            app/build/test-results/testCoreDebugUnitTest/
+            app/build/reports/tests/testCoreDebugUnitTest/
+          if-no-files-found: warn
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
