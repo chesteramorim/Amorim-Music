@@ -470,8 +470,16 @@ class LibraryImport internal constructor(
         if (from !== run) return false
         // A cancelled worker must never resurrect a stopped import or mark it complete.
         // Resume sets MATCHING synchronously before launching its worker.
-        if (stage != Stage.STOPPED && _state.value.stage != Stage.MATCHING &&
-            !(stage == Stage.MATCHED && _state.value.stage == Stage.CREATING)) return false
+        val current = _state.value.stage
+        val allowed = when (stage) {
+            Stage.STOPPED -> current == Stage.MATCHING
+            Stage.CREATING -> current == Stage.MATCHED
+            Stage.MATCHED -> current == Stage.MATCHING || current == Stage.CREATING
+            Stage.MATCHING -> current == Stage.MATCHING
+            Stage.PAUSED, Stage.OFFLINE -> current == Stage.MATCHING
+            else -> false
+        }
+        if (!allowed) return false
         _state.update { it.copy(stage = stage, progress = from.snapshot()) }
         true
     }
