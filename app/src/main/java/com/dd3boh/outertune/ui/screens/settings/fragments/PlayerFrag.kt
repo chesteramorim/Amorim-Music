@@ -918,7 +918,7 @@ fun ColumnScope.PlaybackBehaviourFrag() {
     val (skipOnErrorKey, onSkipOnErrorChange) = rememberPreference(key = SkipOnErrorKey, defaultValue = false)
     val (stopMusicOnTaskClear, onStopMusicOnTaskClearChange) = rememberPreference(
         key = StopMusicOnTaskClearKey,
-        defaultValue = true
+        defaultValue = false
     )
 
     val (shareAudioFocus, onShareAudioFocusChange) = rememberPreference(
