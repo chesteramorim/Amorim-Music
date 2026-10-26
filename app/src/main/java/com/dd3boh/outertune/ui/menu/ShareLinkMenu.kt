@@ -44,7 +44,7 @@ import com.dd3boh.outertune.utils.shareSheet
 @Composable
 fun rememberShareLink(): (link: ShareLink, done: () -> Unit) -> Unit {
     val context = LocalContext.current
-    val chosen by rememberEnumPreference(ShareLinkKindKey, defaultValue = ShareLinkKind.YOUTUBE_MUSIC)
+    val chosen by rememberEnumPreference(ShareLinkKindKey, defaultValue = ShareLinkKind.ASK)
     var asking by remember { mutableStateOf<Pair<ShareLink, () -> Unit>?>(null) }
 
     asking?.let { (link, done) ->
