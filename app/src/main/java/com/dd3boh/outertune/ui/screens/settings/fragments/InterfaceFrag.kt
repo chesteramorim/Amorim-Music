@@ -497,7 +497,7 @@ fun ColumnScope.LocalizationFrag() {
 
 @Composable
 fun ColumnScope.ShareLinksFrag() {
-    val (kind, onKindChange) = rememberEnumPreference(ShareLinkKindKey, defaultValue = ShareLinkKind.YOUTUBE_MUSIC)
+    val (kind, onKindChange) = rememberEnumPreference(ShareLinkKindKey, defaultValue = ShareLinkKind.ASK)
 
     EnumListPreference(
         modifier = Modifier.tourTarget(Tour.SETTING_SHARE_LINKS),
