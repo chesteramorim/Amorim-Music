@@ -161,10 +161,10 @@ fun ColumnScope.DownloadsFrag() {
         }
     }
 
-    InfoLabel("QUALIDADE DE ÁUDIO E REDE • Reprodução online, downloads, codec e conexão em um só lugar.")
+    InfoLabel("QUALIDADE DAS MÚSICAS • Ajuste como ouvir, baixar e usar a internet.")
 
     EnumListPreference(
-        title = { Text("Qualidade da reprodução online") },
+        title = { Text("Qualidade para ouvir músicas") },
         icon = { Icon(Icons.Rounded.HighQuality, null) },
         selectedValue = playbackAudioQuality,
         onValueSelected = onPlaybackAudioQualityChange,
@@ -177,7 +177,7 @@ fun ColumnScope.DownloadsFrag() {
             }
         }
     )
-    InfoLabel("Máxima usa a melhor qualidade disponível na fonte, inclusive nos dados móveis. Não significa necessariamente 320 kbps.")
+    InfoLabel("A opção Máxima usa a melhor qualidade disponível, inclusive pela internet do celular. A qualidade depende da música e da fonte.")
 
     EnumListPreference(
         title = { Text("Qualidade dos downloads") },
@@ -195,7 +195,7 @@ fun ColumnScope.DownloadsFrag() {
         }
     )
     EnumListPreference(
-        title = { Text("Codec preferido para downloads") },
+        title = { Text("Formato das músicas baixadas") },
         icon = { Icon(Icons.Rounded.HighQuality, null) },
         selectedValue = downloadAudioCodec,
         onValueSelected = onDownloadAudioCodecChange,
@@ -207,11 +207,11 @@ fun ColumnScope.DownloadsFrag() {
             }
         }
     )
-    InfoLabel("O aplicativo tentará usar o codec escolhido. Se ele não estiver disponível, usará a seleção automática. Para trocar o formato ou a qualidade de uma música já baixada, remova o download e baixe novamente.")
+    InfoLabel("O aplicativo tenta usar o formato escolhido. Se não estiver disponível, escolhe outro automaticamente. Para mudar uma música já baixada, apague o download e baixe novamente.")
 
     SwitchPreference(
-        title = { Text("Baixar somente por Wi-Fi") },
-        description = "Ativado: aguarda Wi-Fi. Desativado: permite baixar por Wi-Fi ou dados móveis.",
+        title = { Text("Baixar apenas com Wi-Fi") },
+        description = "Ligado: espera uma conexão Wi-Fi. Desligado: também pode usar a internet do celular.",
         icon = { Icon(Icons.Rounded.Wifi, null) },
         checked = downloadOnWifiOnly,
         onCheckedChange = {
