@@ -159,7 +159,7 @@ fun ColumnScope.BackupAndRestoreFrag(viewModel: BackupRestoreViewModel) {
             }
         }
 
-    // Automatic backups. Inert until the switch is on and a folder is chosen: AutoBackup.schedule
+    // Manual backup and restore use one-time document picker grants; they do not require\n    // an app-managed cloud login or retained account credentials. Scheduled backups below\n    // are different: they deliberately retain a folder grant until disabled/revoked.\n    InfoLabel("Privacidade: para salvar ou restaurar uma cópia na sua nuvem, escolha o arquivo pelo seletor do Android. O Amorim Music não pede sua senha nem mantém uma sessão própria com o serviço. Backups automáticos são opcionais e exigem acesso contínuo à pasta escolhida; deixe-os desligados se quiser autorizar somente a cada operação.")\n    Spacer(modifier = Modifier.height(12.dp))\n\n    // Automatic backups. Inert until the switch is on and a folder is chosen: AutoBackup.schedule
     // cancels rather than enqueues in that state, so nothing runs for anyone who has not opted in.
     val (autoBackupEnabled, onAutoBackupEnabledChange) =
         rememberPreference(AutoBackupEnabledKey, defaultValue = false)
