@@ -339,12 +339,20 @@ fun ColumnScope.BackupAndRestoreFrag(viewModel: BackupRestoreViewModel) {
                 onAutoBackupEnabledChange(false)
                 val previous = autoBackupFolder
                 onAutoBackupFolderChange("")
-                runCatching {
-                    context.contentResolver.releasePersistableUriPermission(
-                        previous.toUri(),
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                    )
-                }.onFailure { reportException(it) }
+                // Revoke only flags that Android actually persisted for this folder.
+                // Releasing a permission that was never granted can throw and leave access behind.
+                context.contentResolver.persistedUriPermissions
+                    .filter { it.uri == previous.toUri() }
+                    .forEach { permission ->
+                        val flags =
+                            (if (permission.isReadPermission) Intent.FLAG_GRANT_READ_URI_PERMISSION else 0) or
+                            (if (permission.isWritePermission) Intent.FLAG_GRANT_WRITE_URI_PERMISSION else 0)
+                        if (flags != 0) {
+                            runCatching {
+                                context.contentResolver.releasePersistableUriPermission(permission.uri, flags)
+                            }.onFailure { reportException(it) }
+                        }
+                    }
             }
         )
 
