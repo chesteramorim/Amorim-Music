@@ -803,6 +803,7 @@ fun ColumnScope.AudioQualityFrag() {
     val quality = resolved ?: stringResource(R.string.audio_quality_now_nothing)
 
     PreferenceEntry(
+        modifier = Modifier.tourTarget(Tour.SETTING_AUDIO_QUALITY),
         title = { Text(stringResource(R.string.audio_quality_now)) },
         description = if (audioQuality == AudioQuality.MAX) "$quality\n$lossless" else quality,
         icon = { Icon(Icons.Rounded.Speed, null) },
