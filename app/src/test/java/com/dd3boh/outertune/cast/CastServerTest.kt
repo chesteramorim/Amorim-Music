@@ -491,8 +491,16 @@ class CastServerTest {
             gate.countDown()
             held.forEach { it.use { response -> assertEquals(100_000, response.body!!.bytes().size) } }
         }
-        // Their places are free again once they are done.
-        get(server.url("a")).use { assertEquals(200, it.code) }
+        // Reading the final byte can finish before the server worker closes its socket and
+        // releases its per-peer slot. Allow that brief cleanup, but require recovery promptly.
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3)
+        var finalStatus: Int
+        do {
+            finalStatus = get(server.url("a")).use { it.code }
+            if (finalStatus == 200) break
+            Thread.sleep(20)
+        } while (System.nanoTime() < deadline)
+        assertEquals("The peer slot was not released after streaming finished", 200, finalStatus)
     }
 
     @Test
