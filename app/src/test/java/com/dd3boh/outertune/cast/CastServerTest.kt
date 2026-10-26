@@ -611,11 +611,19 @@ class CastServerTest {
             server.stop()
             assertFalse(server.isRunning)
             assertEquals(-1, server.boundPort)
+            // A closed socket can report EOF or IOException depending on the OS and client.
+            // Either is valid, provided the entire song was not delivered after stop.
+            var bytesAfterStop = 0L
             try {
                 val buffer = ByteArray(64 * 1024)
-                while (stream.read(buffer) >= 0) Unit
-                fail("The song carried on after stop")
+                while (true) {
+                    val count = stream.read(buffer)
+                    if (count < 0) break
+                    bytesAfterStop += count
+                    assertTrue("The song carried on after stop", bytesAfterStop < 64L * 1024 * 1024)
+                }
             } catch (expected: IOException) {
+                // The stopped server reset the connection.
             }
         }
         try {
