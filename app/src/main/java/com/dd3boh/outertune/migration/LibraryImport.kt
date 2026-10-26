@@ -350,10 +350,16 @@ class LibraryImport internal constructor(
             // Progress only, never the stage: a result that lands just after Cancel must not
             // turn a stopped run back into a running one on screen.
             matcher().run(run.tracks, run::isDone) { index, outcome ->
+                // Cancellation can arrive while a search is returning. Do not commit a
+                // result or schedule a save after the user has stopped this run.
+                currentCoroutineContext().ensureActive()
                 run.record(index, outcome)
                 refresh(run)
                 saveSoon()
             }
+            // A cancellation between the final lookup and stage update must not
+            // incorrectly mark a cancelled import as fully matched.
+            currentCoroutineContext().ensureActive()
             setStage(Stage.MATCHED, run)
         } catch (e: SearchRefused) {
             // A run that was cancelled as the refusal came stays as Cancel left it.
