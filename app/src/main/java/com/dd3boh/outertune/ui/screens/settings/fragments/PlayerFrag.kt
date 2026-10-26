@@ -720,6 +720,8 @@ fun ColumnScope.TransitionFadeFrag() {
         onCheckedChange = onEnabledChange,
     )
 
+    InfoLabel("Para shows ao vivo e álbuns contínuos, deixe a transição suave desligada. Assim, o aplicativo não altera de propósito o início ou o fim das faixas. Esta opção não mistura duas músicas ao mesmo tempo.")
+
     if (!enabled) return
 
     val (seconds, onSecondsChange) = rememberPreference(
@@ -851,6 +853,8 @@ fun ColumnScope.AudioEffectsFrag() {
         checked = skipSilence,
         onCheckedChange = onSkipSilenceChange
     )
+
+    InfoLabel("Pular silêncio pode cortar pausas intencionais de músicas e shows. Deixe desligado para ouvir álbuns completos; ative apenas quando quiser encurtar trechos silenciosos.")
 
     LoudnessRepairEntry()
 }
