@@ -767,21 +767,9 @@ fun ColumnScope.AudioQualityFrag() {
         defaultValue = AudioQuality.AUTO
     )
 
-    EnumListPreference(
-        modifier = Modifier.tourTarget(Tour.SETTING_AUDIO_QUALITY),
-        title = { Text(stringResource(R.string.audio_quality)) },
-        icon = { Icon(Icons.Rounded.HighQuality, null) },
-        selectedValue = audioQuality,
-        onValueSelected = onAudioQualityChange,
-        valueText = {
-            when (it) {
-                AudioQuality.MAX -> stringResource(R.string.audio_quality_max)
-                AudioQuality.AUTO -> stringResource(R.string.audio_quality_auto)
-                AudioQuality.HIGH -> stringResource(R.string.audio_quality_high)
-                AudioQuality.LOW -> stringResource(R.string.audio_quality_low)
-            }
-        }
-    )
+    // Playback quality is configured alongside download quality and codec in Storage.
+    // Keep the live codec/bitrate display here, without a duplicate quality selector.
+    InfoLabel("A qualidade da reprodução é configurada em Armazenamento, junto aos downloads e codecs.")
 
     // What the control above actually produced. Bitrate and sample rate have always been recorded
     // for every track and have always been on display, but only in the details dialog three taps
