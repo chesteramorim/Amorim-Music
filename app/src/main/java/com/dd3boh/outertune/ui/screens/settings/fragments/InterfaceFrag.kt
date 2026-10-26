@@ -513,4 +513,5 @@ fun ColumnScope.ShareLinksFrag() {
             }
         }
     )
+    InfoLabel("Compartilhamento inteligente: escolha um link direto do YouTube Music ou uma página para abrir em outros serviços. Se não houver página compatível para a música, será enviado o link direto. A disponibilidade depende de cada serviço.")
 }
