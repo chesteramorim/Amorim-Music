@@ -1,6 +1,11 @@
 name: Diagnose intermittent unit tests
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - amorim-download-quality-v1
+    paths:
+      - '.github/workflows/diagnose-flaky-tests.yml'
 
 jobs:
   repeated-tests:
