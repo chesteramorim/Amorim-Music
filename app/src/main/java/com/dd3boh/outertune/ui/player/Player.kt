@@ -728,11 +728,11 @@ fun BottomSheetPlayer(
                 // still works below API 33 where the refraction cannot.
                 val glassT = if (liquidGlass) glassIntensity.coerceIn(0f, 1f) else 0f
 
-                val stockOverlayAlpha = if (useDarkTheme) 0.4f else 0.55f
+                val stockOverlayAlpha = if (useDarkTheme) 0.52f else 0.68f
                 val overlayColor = (if (useDarkTheme) Color.Black else Color.White)
                     .copy(alpha = lerp(stockOverlayAlpha, 0f, glassT))
                 val artworkAlpha = lerp(1f, 0.5f, glassT)
-                val gradientAlpha = lerp(0.8f, 0.4f, glassT)
+                val gradientAlpha = lerp(0.62f, 0.32f, glassT)
                 val blurRadius = lerp(if (useDarkTheme) 150f else 100f, 100f, glassT).dp
                 if (effectivePlayerBackground == PlayerBackgroundStyle.LIVING) {
                     // Not inside the AnimatedContent below: it turns one cover's colours into the
