@@ -158,8 +158,13 @@ class DownloadUtil @Inject constructor(
                 // A database that does not answer is taken as a copy of unknown quality, and the
                 // download takes it as it is. Given up: the better copy for this download, where
                 // the wait used to hold one of the three download threads for good.
-                val storedTier = runCatching { database.readOrNull { formatRow(mediaId) } }.getOrNull()?.qualityTier
-                if (!isStaleQualityTier(storedTier, audioQuality)) return@Factory dataSpec
+                val storedFormat = runCatching { database.readOrNull { formatRow(mediaId) } }.getOrNull()
+                val preferredMime = downloadAudioCodec.mimePrefix
+                val staleCodec = preferredMime != null &&
+                    storedFormat?.mimeType?.startsWith(preferredMime, ignoreCase = true) != true
+                if (!isStaleQualityTier(storedFormat?.qualityTier, audioQuality) && !staleCodec) {
+                    return@Factory dataSpec
+                }
                 staleCopy = true
             }
             if (playerCache.holdsPartFromStart(mediaId)) {
@@ -172,7 +177,10 @@ class DownloadUtil @Inject constructor(
 
         // Not for a stale copy: the cache serves by the song's id whatever address comes back, so
         // a remembered url would still read the old bytes.
-        songUrlCache[mediaId]?.takeIf { !staleCopy && it.second > System.currentTimeMillis() }?.let {
+        songUrlCache[mediaId]?.takeIf {
+            !staleCopy && downloadAudioCodec == DownloadAudioCodec.AUTO &&
+                it.second > System.currentTimeMillis()
+        }?.let {
             return@Factory dataSpec.withUri(it.first.toUri())
         }
 
