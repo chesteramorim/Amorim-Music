@@ -159,7 +159,12 @@ fun ColumnScope.BackupAndRestoreFrag(viewModel: BackupRestoreViewModel) {
             }
         }
 
-    // Manual backup and restore use one-time document picker grants; they do not require\n    // an app-managed cloud login or retained account credentials. Scheduled backups below\n    // are different: they deliberately retain a folder grant until disabled/revoked.\n    InfoLabel("Privacidade: para salvar ou restaurar uma cópia na sua nuvem, escolha o arquivo pelo seletor do Android. O Amorim Music não pede sua senha nem mantém uma sessão própria com o serviço. Backups automáticos são opcionais e exigem acesso contínuo à pasta escolhida; deixe-os desligados se quiser autorizar somente a cada operação.")\n    Spacer(modifier = Modifier.height(12.dp))\n\n    // Automatic backups. Inert until the switch is on and a folder is chosen: AutoBackup.schedule
+    // Manual operations use the Android document picker without a retained app login.
+    // Automatic backups intentionally keep a folder grant until the user revokes it.
+    InfoLabel("Privacidade: backups manuais usam o seletor de arquivos do Android, sem guardar sua senha. O backup automático mantém uma permissão de pasta até você removê-la.")
+    Spacer(modifier = Modifier.height(12.dp))
+
+    // Automatic backups. Inert until the switch is on and a folder is chosen: AutoBackup.schedule
     // cancels rather than enqueues in that state, so nothing runs for anyone who has not opted in.
     val (autoBackupEnabled, onAutoBackupEnabledChange) =
         rememberPreference(AutoBackupEnabledKey, defaultValue = false)
@@ -321,6 +326,25 @@ fun ColumnScope.BackupAndRestoreFrag(viewModel: BackupRestoreViewModel) {
             onClick = {
                 turnOnAfterPick = false
                 folderLauncher.launch(null)
+            }
+        )
+
+        PreferenceEntry(
+            title = { Text("Desconectar pasta de backup") },
+            description = "Desativa os backups automáticos e remove a autorização permanente desta pasta no aplicativo.",
+            icon = { Icon(Icons.Rounded.Folder, null) },
+            isEnabled = autoBackupFolder.isNotBlank(),
+            onClick = {
+                AutoBackup.schedule(context, enabled = false, folder = "")
+                onAutoBackupEnabledChange(false)
+                val previous = autoBackupFolder
+                onAutoBackupFolderChange("")
+                runCatching {
+                    context.contentResolver.releasePersistableUriPermission(
+                        previous.toUri(),
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    )
+                }.onFailure { reportException(it) }
             }
         )
 
