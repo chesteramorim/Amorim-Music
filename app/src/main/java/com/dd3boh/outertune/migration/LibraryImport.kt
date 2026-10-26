@@ -352,10 +352,14 @@ class LibraryImport internal constructor(
             matcher().run(run.tracks, run::isDone) { index, outcome ->
                 // Cancellation can arrive while a search is returning. Do not commit a
                 // result or schedule a save after the user has stopped this run.
-                currentCoroutineContext().ensureActive()
-                run.record(index, outcome)
-                refresh(run)
-                saveSoon()
+                // The matcher callback is not suspending: check the current stage
+                // under the same lock used by Cancel before committing a result.
+                synchronized(lock) {
+                    if (_state.value.stage != Stage.MATCHING || this.run !== run) return@run
+                    run.record(index, outcome)
+                    refresh(run)
+                    saveSoon()
+                }
             }
             // A cancellation between the final lookup and stage update must not
             // incorrectly mark a cancelled import as fully matched.
