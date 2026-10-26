@@ -259,6 +259,9 @@ class CastServer(
                 // worker held by a receiver that stopped reading long ago is freed for that retry.
                 release(connection)
                 letGoOfStalled(null)
+                // A silent peer must not monopolize the last worker for the full
+                // first-byte deadline while a real receiver is retrying.
+                evictIdleReaders()
                 refuse(client, refuser)
             }
         }
@@ -291,6 +294,16 @@ class CastServer(
      * [stalledAfterMs] for the receiver to read it. The worker sending it is free as soon as its
      * write fails.
      */
+    private fun evictIdleReaders() {
+        val now = System.nanoTime()
+        for (connection in connections) {
+            if (connection.awaitingFirstByte &&
+                now - connection.acceptedAt >= TimeUnit.MILLISECONDS.toNanos(200)) {
+                runCatching { connection.socket.close() }
+            }
+        }
+    }
+
     private fun letGoOfStalled(peer: InetAddress?) {
         val now = System.nanoTime()
         val limit = stalledAfterMs * 1_000_000L
@@ -331,7 +344,19 @@ class CastServer(
             client.tcpNoDelay = true
             val now = System.nanoTime()
             val input = DeadlineInput(client, now + headTimeoutMs * 1_000_000L, firstByteBy = now + firstByteTimeoutMs * 1_000_000L)
-            handle(BufferedInputStream(input), WatchedOutput(connection, client.getOutputStream()))
+            val trackedInput = object : InputStream() {
+                override fun read(): Int {
+                    val value = input.read()
+                    if (value >= 0) connection.awaitingFirstByte = false
+                    return value
+                }
+                override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
+                    val count = input.read(buffer, offset, length)
+                    if (count > 0) connection.awaitingFirstByte = false
+                    return count
+                }
+            }
+            handle(BufferedInputStream(trackedInput), WatchedOutput(connection, client.getOutputStream()))
         } catch (e: SocketTimeoutException) {
             Log.d(TAG, "A request head took too long: ${e.message}")
         } catch (e: IOException) {
@@ -437,6 +462,11 @@ class CastServer(
     private class Connection(val socket: Socket) {
         val peer: InetAddress? = socket.inetAddress
         val released = AtomicBoolean()
+
+        val acceptedAt = System.nanoTime()
+
+        @Volatile
+        var awaitingFirstByte = true
 
         @Volatile
         var writing = false
