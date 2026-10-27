@@ -162,6 +162,7 @@ fun ColumnScope.DownloadsFrag() {
     }
 
     InfoLabel("QUALIDADE DAS MÚSICAS • Ajuste como ouvir, baixar e usar a internet.")
+    Spacer(Modifier.size(12.dp))
 
     EnumListPreference(
         title = { Text("Qualidade para ouvir músicas") },
@@ -178,6 +179,7 @@ fun ColumnScope.DownloadsFrag() {
         }
     )
     InfoLabel("A opção Máxima usa a melhor qualidade disponível, inclusive pela internet do celular. A qualidade depende da música e da fonte.")
+    Spacer(Modifier.size(12.dp))
 
     EnumListPreference(
         title = { Text("Qualidade dos downloads") },
@@ -208,6 +210,7 @@ fun ColumnScope.DownloadsFrag() {
         }
     )
     InfoLabel("O aplicativo tenta usar o formato escolhido. Se não estiver disponível, escolhe outro automaticamente. Para mudar uma música já baixada, apague o download e baixe novamente.")
+    Spacer(Modifier.size(12.dp))
 
     SwitchPreference(
         title = { Text("Baixar apenas com Wi-Fi") },
