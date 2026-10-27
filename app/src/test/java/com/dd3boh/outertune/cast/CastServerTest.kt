@@ -605,8 +605,8 @@ class CastServerTest {
     @Test
     fun `stop ends a song being sent and refuses new connections`() {
         val server = serve(FakeSource("a" to FakeSong(64L * 1024 * 1024, chunk = 512 * 1024)))
-        val port = server.boundPort
-        get(server.url("a")).use { response ->
+        val sessionUrl = server.url("a")
+        get(sessionUrl).use { response ->
             val stream = response.body!!.byteStream()
             stream.read(ByteArray(1000))
             server.stop()
@@ -632,7 +632,7 @@ class CastServerTest {
         // Verify the actual contract: a request using this session's token must not succeed.
         try {
             client.newBuilder().callTimeout(2, TimeUnit.SECONDS).build()
-                .newCall(Request.Builder().url(server.url("a").replace(":-1/", ":$port/")).build())
+                .newCall(Request.Builder().url(sessionUrl).build())
                 .execute().use { reply ->
                     assertFalse("Stopped session answered HTTP ${reply.code}", reply.isSuccessful)
                 }
