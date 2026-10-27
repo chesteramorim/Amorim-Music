@@ -5,6 +5,7 @@ on:
     branches:
       - canary
       - amorim-download-quality-v1
+      - amorim-phase2-improvements
   pull_request:
     branches:
       - '**'
