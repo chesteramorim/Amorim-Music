@@ -627,10 +627,17 @@ class CastServerTest {
                 // The stopped server reset the connection.
             }
         }
+        // A TCP connect may complete from the kernel backlog during shutdown or if another
+        // test reuses this ephemeral port. Neither means the stopped session still serves songs.
+        // Verify the actual contract: a request using this session's token must not succeed.
         try {
-            Socket().use { it.connect(InetSocketAddress("127.0.0.1", port), 2000) }
-            fail("Still listening after stop")
+            client.newBuilder().callTimeout(2, TimeUnit.SECONDS).build()
+                .newCall(Request.Builder().url(server.url("a").replace(":-1/", ":$port/")).build())
+                .execute().use { reply ->
+                    assertFalse("Stopped session answered HTTP ${reply.code}", reply.isSuccessful)
+                }
         } catch (expected: IOException) {
+            // Connection refused, reset, or timed out: the stopped session is not serving.
         }
         server.stop()
     }
