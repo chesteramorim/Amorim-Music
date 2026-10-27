@@ -159,6 +159,11 @@ fun ColumnScope.BackupAndRestoreFrag(viewModel: BackupRestoreViewModel) {
             }
         }
 
+    // Manual operations use the Android document picker without a retained app login.
+    // Automatic backups intentionally keep a folder grant until the user revokes it.
+    InfoLabel("Privacidade: você escolhe onde salvar ou restaurar o arquivo pelo Android, inclusive em serviços de nuvem disponíveis no aparelho. Não é necessário conectar sua conta ao Amorim Music. O backup ainda não tem criptografia própria: proteja o arquivo e evite pastas compartilhadas. O backup automático mantém acesso à pasta escolhida até você desconectá-la.")
+    Spacer(modifier = Modifier.height(12.dp))
+
     // Automatic backups. Inert until the switch is on and a folder is chosen: AutoBackup.schedule
     // cancels rather than enqueues in that state, so nothing runs for anyone who has not opted in.
     val (autoBackupEnabled, onAutoBackupEnabledChange) =
@@ -321,6 +326,33 @@ fun ColumnScope.BackupAndRestoreFrag(viewModel: BackupRestoreViewModel) {
             onClick = {
                 turnOnAfterPick = false
                 folderLauncher.launch(null)
+            }
+        )
+
+        PreferenceEntry(
+            title = { Text("Desconectar pasta de backup") },
+            description = "Desativa os backups automáticos e remove a autorização permanente desta pasta no aplicativo.",
+            icon = { Icon(Icons.Rounded.Folder, null) },
+            isEnabled = autoBackupFolder.isNotBlank(),
+            onClick = {
+                AutoBackup.schedule(context, enabled = false, folder = "")
+                onAutoBackupEnabledChange(false)
+                val previous = autoBackupFolder
+                onAutoBackupFolderChange("")
+                // Revoke only flags that Android actually persisted for this folder.
+                // Releasing a permission that was never granted can throw and leave access behind.
+                context.contentResolver.persistedUriPermissions
+                    .filter { it.uri == previous.toUri() }
+                    .forEach { permission ->
+                        val flags =
+                            (if (permission.isReadPermission) Intent.FLAG_GRANT_READ_URI_PERMISSION else 0) or
+                            (if (permission.isWritePermission) Intent.FLAG_GRANT_WRITE_URI_PERMISSION else 0)
+                        if (flags != 0) {
+                            runCatching {
+                                context.contentResolver.releasePersistableUriPermission(permission.uri, flags)
+                            }.onFailure { reportException(it) }
+                        }
+                    }
             }
         )
 

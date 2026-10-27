@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.dd3boh.outertune.LocalDownloadUtil
 import com.dd3boh.outertune.LocalDatabase
 import com.dd3boh.outertune.R
 import com.dd3boh.outertune.constants.ListThumbnailSize
@@ -66,6 +67,10 @@ fun AddToPlaylistDialog(
     onDismiss: () -> Unit,
 ) {
     val database = LocalDatabase.current
+    val downloadUtil = LocalDownloadUtil.current
+    fun queuePlaylistDownloads(ids: List<String>) {
+        database.songEntitiesByIds(ids.distinct()).filterNot { it.isLocal }.forEach(downloadUtil::download)
+    }
     val coroutineScope = rememberCoroutineScope()
 
     val (sortType, onSortTypeChange) = rememberEnumPreference(PlaylistSortTypeKey, PlaylistSortType.CREATE_DATE)
@@ -218,6 +223,7 @@ fun AddToPlaylistDialog(
                         } else {
                             onDismiss()
                             database.addSongToPlaylist(playlist, songIds!!)
+                            queuePlaylistDownloads(songIds!!)
                             onAdded?.invoke(playlist)
                             pushToYouTube(playlist, songIds!!)
                         }
@@ -265,6 +271,7 @@ fun AddToPlaylistDialog(
                         val playlist = selectedPlaylist!!
                         val ids = songIds!!.filter { !duplicates.contains(it) }
                         database.transaction { addSongToPlaylist(playlist, ids) }
+                        queuePlaylistDownloads(ids)
                         onAdded?.invoke(playlist)
                         pushToYouTube(playlist, ids)
                     }
@@ -279,6 +286,9 @@ fun AddToPlaylistDialog(
                         val playlist = selectedPlaylist!!
                         val ids = songIds!!
                         database.transaction { addSongToPlaylist(playlist, ids) }
+                        // Keep this path consistent with normal adds and "skip duplicates":
+                        // including an existing song must still enqueue its offline download.
+                        queuePlaylistDownloads(ids)
                         onAdded?.invoke(playlist)
                         pushToYouTube(playlist, ids)
                     }

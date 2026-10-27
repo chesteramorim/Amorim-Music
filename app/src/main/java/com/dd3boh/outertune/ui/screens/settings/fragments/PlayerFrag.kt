@@ -92,7 +92,6 @@ import com.dd3boh.outertune.constants.SeekIncrementKey
 import com.dd3boh.outertune.constants.SkipOnErrorKey
 import com.dd3boh.outertune.constants.SkipSilenceKey
 import com.dd3boh.outertune.constants.ResumeOnBluetoothKey
-import com.dd3boh.outertune.constants.StopMusicOnTaskClearKey
 import com.dd3boh.outertune.constants.SleepTimerDefaults
 import com.dd3boh.outertune.constants.SleepTimerFadeDurationKey
 import com.dd3boh.outertune.constants.ShareAudioFocusKey
@@ -720,6 +719,8 @@ fun ColumnScope.TransitionFadeFrag() {
         onCheckedChange = onEnabledChange,
     )
 
+    InfoLabel("Para shows ao vivo e álbuns contínuos, deixe a transição suave desligada. Assim, o aplicativo não altera de propósito o início ou o fim das faixas. Esta opção não mistura duas músicas ao mesmo tempo.")
+
     if (!enabled) return
 
     val (seconds, onSecondsChange) = rememberPreference(
@@ -767,21 +768,9 @@ fun ColumnScope.AudioQualityFrag() {
         defaultValue = AudioQuality.AUTO
     )
 
-    EnumListPreference(
-        modifier = Modifier.tourTarget(Tour.SETTING_AUDIO_QUALITY),
-        title = { Text(stringResource(R.string.audio_quality)) },
-        icon = { Icon(Icons.Rounded.HighQuality, null) },
-        selectedValue = audioQuality,
-        onValueSelected = onAudioQualityChange,
-        valueText = {
-            when (it) {
-                AudioQuality.MAX -> stringResource(R.string.audio_quality_max)
-                AudioQuality.AUTO -> stringResource(R.string.audio_quality_auto)
-                AudioQuality.HIGH -> stringResource(R.string.audio_quality_high)
-                AudioQuality.LOW -> stringResource(R.string.audio_quality_low)
-            }
-        }
-    )
+    // Playback quality is configured alongside download quality and codec in Storage.
+    // Keep the live codec/bitrate display here, without a duplicate quality selector.
+    InfoLabel("A qualidade da reprodução é configurada em Armazenamento, junto aos downloads e codecs.")
 
     // What the control above actually produced. Bitrate and sample rate have always been recorded
     // for every track and have always been on display, but only in the details dialog three taps
@@ -813,6 +802,7 @@ fun ColumnScope.AudioQualityFrag() {
     val quality = resolved ?: stringResource(R.string.audio_quality_now_nothing)
 
     PreferenceEntry(
+        modifier = Modifier.tourTarget(Tour.SETTING_AUDIO_QUALITY),
         title = { Text(stringResource(R.string.audio_quality_now)) },
         description = if (audioQuality == AudioQuality.MAX) "$quality\n$lossless" else quality,
         icon = { Icon(Icons.Rounded.Speed, null) },
@@ -863,6 +853,8 @@ fun ColumnScope.AudioEffectsFrag() {
         checked = skipSilence,
         onCheckedChange = onSkipSilenceChange
     )
+
+    InfoLabel("Pular silêncio pode cortar pausas intencionais de músicas e shows. Deixe desligado para ouvir álbuns completos; ative apenas quando quiser encurtar trechos silenciosos.")
 
     LoudnessRepairEntry()
 }
@@ -923,11 +915,6 @@ fun LoudnessRepairEntry() {
 fun ColumnScope.PlaybackBehaviourFrag() {
     val keepAlive by rememberPreference(key = KeepAliveKey, defaultValue = false)
     val (skipOnErrorKey, onSkipOnErrorChange) = rememberPreference(key = SkipOnErrorKey, defaultValue = false)
-    val (stopMusicOnTaskClear, onStopMusicOnTaskClearChange) = rememberPreference(
-        key = StopMusicOnTaskClearKey,
-        defaultValue = true
-    )
-
     val (shareAudioFocus, onShareAudioFocusChange) = rememberPreference(
         key = ShareAudioFocusKey,
         defaultValue = false
@@ -955,14 +942,6 @@ fun ColumnScope.PlaybackBehaviourFrag() {
         icon = { Icon(Icons.Rounded.SkipNext, null) },
         checked = skipOnErrorKey,
         onCheckedChange = onSkipOnErrorChange
-    )
-    SwitchPreference(
-        title = { Text(stringResource(R.string.stop_music_on_task_clear)) },
-        description = stringResource(R.string.stop_music_on_task_clear_description),
-        icon = { Icon(Icons.Rounded.ClearAll, null) },
-        isEnabled = !keepAlive,
-        checked = stopMusicOnTaskClear,
-        onCheckedChange = onStopMusicOnTaskClearChange,
     )
     // The caveats moved behind the i button. A row description is a label, not a paragraph.
     ExplainedSwitchPreference(

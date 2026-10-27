@@ -5078,13 +5078,11 @@ class MusicService : MediaLibraryService(),
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         Log.i(TAG, "onTaskRemoved called")
-        if (dataStore.get(StopMusicOnTaskClearKey, true) && !dataStore.get(KeepAliveKey, false)) {
-            Log.i(TAG, "onTaskRemoved kill")
-            pauseAllPlayersAndStopSelf()
-        } else {
-            Log.i(TAG, "onTaskRemoved def")
-            super.onTaskRemoved(rootIntent)
-        }
+        // Removing the app from Recents is not an explicit request to stop music.
+        // Older installs may still have StopMusicOnTaskClearKey=true persisted.
+        // Keep the MediaSessionService alive until playback is explicitly stopped.
+        Log.i(TAG, "onTaskRemoved: preserve media playback")
+        super.onTaskRemoved(rootIntent)
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaSession

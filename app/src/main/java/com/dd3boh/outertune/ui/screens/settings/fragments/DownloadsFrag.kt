@@ -52,6 +52,12 @@ import com.dd3boh.outertune.R
 import com.dd3boh.outertune.constants.DownloadExtraPathKey
 import com.dd3boh.outertune.constants.DownloadPathKey
 import com.dd3boh.outertune.constants.DownloadOnWifiOnlyKey
+import com.dd3boh.outertune.constants.DownloadAudioQuality
+import com.dd3boh.outertune.constants.AudioQuality
+import com.dd3boh.outertune.constants.AudioQualityKey
+import com.dd3boh.outertune.constants.DownloadAudioCodec
+import com.dd3boh.outertune.constants.DownloadAudioCodecKey
+import com.dd3boh.outertune.constants.DownloadAudioQualityKey
 import com.dd3boh.outertune.constants.ScanPathsKey
 import com.dd3boh.outertune.constants.ThumbnailCornerRadius
 import com.dd3boh.outertune.extensions.tryOrNull
@@ -74,6 +80,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.HighQuality
 import com.dd3boh.outertune.constants.LikedAutoDownloadKey
 import com.dd3boh.outertune.constants.LikedAutodownloadMode
 import com.dd3boh.outertune.playback.DownloadUtil
@@ -106,6 +113,14 @@ fun ColumnScope.DownloadsFrag() {
     val (scanPaths, onScanPathsChange) = rememberPreference(ScanPathsKey, defaultValue = "")
     val (likedAutodownload, onLikedAutodownloadChange) =
         rememberEnumPreference(LikedAutoDownloadKey, LikedAutodownloadMode.OFF)
+
+    val (playbackAudioQuality, onPlaybackAudioQualityChange) =
+        rememberEnumPreference(AudioQualityKey, AudioQuality.AUTO)
+    val (downloadAudioQuality, onDownloadAudioQualityChange) =
+        rememberEnumPreference(DownloadAudioQualityKey, DownloadAudioQuality.FOLLOW_PLAYBACK)
+
+    val (downloadAudioCodec, onDownloadAudioCodecChange) =
+        rememberEnumPreference(DownloadAudioCodecKey, DownloadAudioCodec.AUTO)
 
     // size stats
     var downloadCacheSize by remember {
@@ -146,9 +161,63 @@ fun ColumnScope.DownloadsFrag() {
         }
     }
 
+    InfoLabel("QUALIDADE DAS MÚSICAS • Ajuste como ouvir, baixar e usar a internet.")
+    Spacer(Modifier.size(12.dp))
+
+    EnumListPreference(
+        title = { Text("Qualidade para ouvir músicas") },
+        icon = { Icon(Icons.Rounded.HighQuality, null) },
+        selectedValue = playbackAudioQuality,
+        onValueSelected = onPlaybackAudioQualityChange,
+        valueText = {
+            when (it) {
+                AudioQuality.MAX -> stringResource(R.string.audio_quality_max)
+                AudioQuality.AUTO -> stringResource(R.string.audio_quality_auto)
+                AudioQuality.HIGH -> stringResource(R.string.audio_quality_high)
+                AudioQuality.LOW -> stringResource(R.string.audio_quality_low)
+            }
+        }
+    )
+    Spacer(Modifier.size(8.dp))
+    InfoLabel("A opção Máxima usa a melhor qualidade disponível, inclusive pela internet do celular. A qualidade depende da música e da fonte.")
+    Spacer(Modifier.size(12.dp))
+
+    EnumListPreference(
+        title = { Text("Qualidade dos downloads") },
+        icon = { Icon(Icons.Rounded.HighQuality, null) },
+        selectedValue = downloadAudioQuality,
+        onValueSelected = onDownloadAudioQualityChange,
+        valueText = {
+            when (it) {
+                DownloadAudioQuality.FOLLOW_PLAYBACK -> "Seguir qualidade da reprodução"
+                DownloadAudioQuality.MAX -> stringResource(R.string.audio_quality_max)
+                DownloadAudioQuality.AUTO -> stringResource(R.string.audio_quality_auto)
+                DownloadAudioQuality.HIGH -> stringResource(R.string.audio_quality_high)
+                DownloadAudioQuality.LOW -> stringResource(R.string.audio_quality_low)
+            }
+        }
+    )
+    Spacer(Modifier.size(8.dp))
+    EnumListPreference(
+        title = { Text("Formato das músicas baixadas") },
+        icon = { Icon(Icons.Rounded.HighQuality, null) },
+        selectedValue = downloadAudioCodec,
+        onValueSelected = onDownloadAudioCodecChange,
+        valueText = {
+            when (it) {
+                DownloadAudioCodec.AUTO -> "Automático (recomendado)"
+                DownloadAudioCodec.OPUS -> "Opus (WebM)"
+                DownloadAudioCodec.AAC -> "AAC (M4A)"
+            }
+        }
+    )
+    Spacer(Modifier.size(8.dp))
+    InfoLabel("O aplicativo tenta usar o formato escolhido. Se não estiver disponível, escolhe outro automaticamente. Para mudar uma música já baixada, apague o download e baixe novamente.")
+    Spacer(Modifier.size(12.dp))
+
     SwitchPreference(
-        title = { Text(stringResource(R.string.download_on_wifi_only_title)) },
-        description = stringResource(R.string.download_on_wifi_only_description),
+        title = { Text("Baixar apenas com Wi-Fi") },
+        description = "Ligado: espera uma conexão Wi-Fi. Desligado: também pode usar a internet do celular.",
         icon = { Icon(Icons.Rounded.Wifi, null) },
         checked = downloadOnWifiOnly,
         onCheckedChange = {
@@ -158,6 +227,7 @@ fun ColumnScope.DownloadsFrag() {
             downloadUtil.setDownloadRequirements(it)
         }
     )
+    Spacer(Modifier.size(12.dp))
 
     EnumListPreference(
         modifier = Modifier.tourTarget(Tour.SETTING_LIKED_AUTODOWNLOAD),

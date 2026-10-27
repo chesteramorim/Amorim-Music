@@ -28,7 +28,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.dd3boh.outertune.R
 import com.dd3boh.outertune.constants.ShareLinkKindKey
-import com.dd3boh.outertune.constants.Unreleased
 import com.dd3boh.outertune.ui.dialog.DefaultDialog
 import com.dd3boh.outertune.utils.ShareAction
 import com.dd3boh.outertune.utils.ShareLink
@@ -45,7 +44,7 @@ import com.dd3boh.outertune.utils.shareSheet
 @Composable
 fun rememberShareLink(): (link: ShareLink, done: () -> Unit) -> Unit {
     val context = LocalContext.current
-    val chosen by rememberEnumPreference(ShareLinkKindKey, defaultValue = ShareLinkKind.YOUTUBE_MUSIC)
+    val chosen by rememberEnumPreference(ShareLinkKindKey, defaultValue = ShareLinkKind.ASK)
     var asking by remember { mutableStateOf<Pair<ShareLink, () -> Unit>?>(null) }
 
     asking?.let { (link, done) ->
@@ -57,7 +56,7 @@ fun rememberShareLink(): (link: ShareLink, done: () -> Unit) -> Unit {
     }
 
     return { link, done ->
-        when (val action = ShareLinks.decide(link, if (Unreleased.SHARE_PAGE) chosen else ShareLinkKind.YOUTUBE_MUSIC)) {
+        when (val action = ShareLinks.decide(link, chosen)) {
             is ShareAction.Send -> {
                 done()
                 context.shareText(action.text)

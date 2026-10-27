@@ -190,9 +190,12 @@ class CastServer(
             runCatching { socket.close() }
             loopbackSocket?.let { runCatching { it.close() } }
             loopbackSocket = null
+            // Close accepted sockets before interrupting workers. An accept loop may
+            // still be exiting, so sweep again after shutdown to catch late arrivals.
+            connections.forEach { runCatching { it.socket.close() } }
+            workers?.shutdownNow()
             connections.forEach { runCatching { it.socket.close() } }
             connections.clear()
-            workers?.shutdownNow()
             workers = null
             refusals?.shutdownNow()
             refusals = null
@@ -242,6 +245,12 @@ class CastServer(
                 if (!socket.isClosed) Log.w(TAG, "Accept failed", e)
                 break
             }
+            // accept() can return a socket just as stop() closes the listener.
+            // Do not hand that late connection to a worker after the session ended.
+            if (!isRunning || socket.isClosed) {
+                runCatching { client.close() }
+                break
+            }
             val connection = Connection(client)
             if (!admit(connection)) {
                 // As many from this address as any one receiver needs. One of its own that has
@@ -259,6 +268,9 @@ class CastServer(
                 // worker held by a receiver that stopped reading long ago is freed for that retry.
                 release(connection)
                 letGoOfStalled(null)
+                // A silent peer must not monopolize the last worker for the full
+                // first-byte deadline while a real receiver is retrying.
+                evictIdleReaders()
                 refuse(client, refuser)
             }
         }
@@ -291,6 +303,16 @@ class CastServer(
      * [stalledAfterMs] for the receiver to read it. The worker sending it is free as soon as its
      * write fails.
      */
+    private fun evictIdleReaders() {
+        val now = System.nanoTime()
+        for (connection in connections) {
+            if (connection.awaitingFirstByte &&
+                now - connection.acceptedAt >= TimeUnit.MILLISECONDS.toNanos(200)) {
+                runCatching { connection.socket.close() }
+            }
+        }
+    }
+
     private fun letGoOfStalled(peer: InetAddress?) {
         val now = System.nanoTime()
         val limit = stalledAfterMs * 1_000_000L
@@ -328,10 +350,25 @@ class CastServer(
     private fun serve(connection: Connection) {
         val client = connection.socket
         try {
+            // A worker accepted immediately before stop() must not serve a request
+            // after the session has been torn down.
+            if (!isRunning) return
             client.tcpNoDelay = true
             val now = System.nanoTime()
             val input = DeadlineInput(client, now + headTimeoutMs * 1_000_000L, firstByteBy = now + firstByteTimeoutMs * 1_000_000L)
-            handle(BufferedInputStream(input), WatchedOutput(connection, client.getOutputStream()))
+            val trackedInput = object : InputStream() {
+                override fun read(): Int {
+                    val value = input.read()
+                    if (value >= 0) connection.awaitingFirstByte = false
+                    return value
+                }
+                override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
+                    val count = input.read(buffer, offset, length)
+                    if (count > 0) connection.awaitingFirstByte = false
+                    return count
+                }
+            }
+            handle(BufferedInputStream(trackedInput), WatchedOutput(connection, client.getOutputStream()))
         } catch (e: SocketTimeoutException) {
             Log.d(TAG, "A request head took too long: ${e.message}")
         } catch (e: IOException) {
@@ -437,6 +474,11 @@ class CastServer(
     private class Connection(val socket: Socket) {
         val peer: InetAddress? = socket.inetAddress
         val released = AtomicBoolean()
+
+        val acceptedAt = System.nanoTime()
+
+        @Volatile
+        var awaitingFirstByte = true
 
         @Volatile
         var writing = false

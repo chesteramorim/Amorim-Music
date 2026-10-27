@@ -345,15 +345,26 @@ class LibraryImport internal constructor(
     }
 
     private suspend fun match(run: ImportRun) {
+        currentCoroutineContext().ensureActive()
         if (!setStage(Stage.MATCHING, run)) return
         try {
             // Progress only, never the stage: a result that lands just after Cancel must not
             // turn a stopped run back into a running one on screen.
             matcher().run(run.tracks, run::isDone) { index, outcome ->
-                run.record(index, outcome)
-                refresh(run)
-                saveSoon()
+                // Cancellation can arrive while a search is returning. Do not commit a
+                // result or schedule a save after the user has stopped this run.
+                // The matcher callback is not suspending: check the current stage
+                // under the same lock used by Cancel before committing a result.
+                synchronized(lock) {
+                    if (_state.value.stage != Stage.MATCHING || this.run !== run) return@run
+                    run.record(index, outcome)
+                    refresh(run)
+                    saveSoon()
+                }
             }
+            // A cancellation between the final lookup and stage update must not
+            // incorrectly mark a cancelled import as fully matched.
+            currentCoroutineContext().ensureActive()
             setStage(Stage.MATCHED, run)
         } catch (e: SearchRefused) {
             // A run that was cancelled as the refusal came stays as Cancel left it.
@@ -457,6 +468,18 @@ class LibraryImport internal constructor(
      */
     private fun setStage(stage: Stage, from: ImportRun): Boolean = synchronized(lock) {
         if (from !== run) return false
+        // A cancelled worker must never resurrect a stopped import or mark it complete.
+        // Resume sets MATCHING synchronously before launching its worker.
+        val current = _state.value.stage
+        val allowed = when (stage) {
+            Stage.STOPPED -> current == Stage.MATCHING
+            Stage.CREATING -> current == Stage.MATCHED
+            Stage.MATCHED -> current == Stage.MATCHING || current == Stage.CREATING
+            Stage.MATCHING -> current == Stage.MATCHING
+            Stage.PAUSED, Stage.OFFLINE -> current == Stage.MATCHING
+            else -> false
+        }
+        if (!allowed) return false
         _state.update { it.copy(stage = stage, progress = from.snapshot()) }
         true
     }

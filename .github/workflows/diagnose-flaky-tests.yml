@@ -1,0 +1,48 @@
+name: Diagnose intermittent unit tests
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - amorim-download-quality-v1
+    paths:
+      - '.github/workflows/diagnose-flaky-tests.yml'
+
+jobs:
+  repeated-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx4096m\ -XX:MaxMetaspaceSize=768m
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - name: Accept SDK licenses
+        run: yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+      - name: Repeat previously intermittent tests
+        shell: bash
+        run: |
+          set -o pipefail
+          for attempt in 1 2 3; do
+            echo "::group::Focused test pass $attempt"
+            ./gradlew --no-configuration-cache --max-workers=2 :app:testCoreDebugUnitTest --rerun-tasks \
+              --tests 'com.dd3boh.outertune.cast.CastServerTest' \
+              --tests 'com.dd3boh.outertune.migration.LibraryImportTest' \
+              --tests 'com.dd3boh.outertune.ui.screens.walkthrough.SettingsCloserLookTest' \
+              -DskipFormatKtlint
+            echo "::endgroup::"
+          done
+      - name: Upload test reports even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: focused-unit-test-reports
+          path: |
+            app/build/test-results/testCoreDebugUnitTest/
+            app/build/reports/tests/testCoreDebugUnitTest/
+          if-no-files-found: warn

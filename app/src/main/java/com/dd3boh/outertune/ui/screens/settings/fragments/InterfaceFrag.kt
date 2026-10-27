@@ -497,7 +497,7 @@ fun ColumnScope.LocalizationFrag() {
 
 @Composable
 fun ColumnScope.ShareLinksFrag() {
-    val (kind, onKindChange) = rememberEnumPreference(ShareLinkKindKey, defaultValue = ShareLinkKind.YOUTUBE_MUSIC)
+    val (kind, onKindChange) = rememberEnumPreference(ShareLinkKindKey, defaultValue = ShareLinkKind.ASK)
 
     EnumListPreference(
         modifier = Modifier.tourTarget(Tour.SETTING_SHARE_LINKS),
@@ -513,4 +513,5 @@ fun ColumnScope.ShareLinksFrag() {
             }
         }
     )
+    InfoLabel("Compartilhamento inteligente: escolha um link direto do YouTube Music ou uma página para abrir em outros serviços. Se não houver página compatível para a música, será enviado o link direto. A disponibilidade depende de cada serviço.")
 }

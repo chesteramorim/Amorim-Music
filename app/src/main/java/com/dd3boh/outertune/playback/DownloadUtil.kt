@@ -24,6 +24,10 @@ import androidx.media3.exoplayer.scheduler.Requirements
 import com.dd3boh.outertune.R
 import com.dd3boh.outertune.constants.AudioQuality
 import com.dd3boh.outertune.constants.AudioQualityKey
+import com.dd3boh.outertune.constants.DownloadAudioQuality
+import com.dd3boh.outertune.constants.DownloadAudioCodec
+import com.dd3boh.outertune.constants.DownloadAudioCodecKey
+import com.dd3boh.outertune.constants.DownloadAudioQualityKey
 import com.dd3boh.outertune.constants.DownloadExtraPathKey
 import com.dd3boh.outertune.constants.DownloadOnWifiOnlyKey
 import com.dd3boh.outertune.constants.DownloadPathKey
@@ -104,7 +108,11 @@ class DownloadUtil @Inject constructor(
     val TAG = DownloadUtil::class.simpleName.toString()
 
     private val connectivityManager = context.getSystemService<ConnectivityManager>()!!
-    private val audioQuality by enumPreference(context, AudioQualityKey, AudioQuality.AUTO)
+    private val playbackAudioQuality by enumPreference(context, AudioQualityKey, AudioQuality.AUTO)
+    private val downloadAudioQuality by enumPreference(context, DownloadAudioQualityKey, DownloadAudioQuality.FOLLOW_PLAYBACK)
+    private val downloadAudioCodec by enumPreference(context, DownloadAudioCodecKey, DownloadAudioCodec.AUTO)
+    private val audioQuality: AudioQuality
+        get() = downloadAudioQuality.resolve(playbackAudioQuality)
     // Concurrent, because media3 runs each download on its own thread and this is read and written
     // from all of them. An unsynchronised HashMap can corrupt its table under concurrent put.
     private val songUrlCache = java.util.concurrent.ConcurrentHashMap<String, Pair<String, Long>>()
@@ -150,8 +158,13 @@ class DownloadUtil @Inject constructor(
                 // A database that does not answer is taken as a copy of unknown quality, and the
                 // download takes it as it is. Given up: the better copy for this download, where
                 // the wait used to hold one of the three download threads for good.
-                val storedTier = runCatching { database.readOrNull { formatRow(mediaId) } }.getOrNull()?.qualityTier
-                if (!isStaleQualityTier(storedTier, audioQuality)) return@Factory dataSpec
+                val storedFormat = runCatching { database.readOrNull { formatRow(mediaId) } }.getOrNull()
+                val preferredMime = downloadAudioCodec.mimePrefix
+                val staleCodec = preferredMime != null &&
+                    storedFormat?.mimeType?.startsWith(preferredMime, ignoreCase = true) != true
+                if (!isStaleQualityTier(storedFormat?.qualityTier, audioQuality) && !staleCodec) {
+                    return@Factory dataSpec
+                }
                 staleCopy = true
             }
             if (playerCache.holdsPartFromStart(mediaId)) {
@@ -164,7 +177,10 @@ class DownloadUtil @Inject constructor(
 
         // Not for a stale copy: the cache serves by the song's id whatever address comes back, so
         // a remembered url would still read the old bytes.
-        songUrlCache[mediaId]?.takeIf { !staleCopy && it.second > System.currentTimeMillis() }?.let {
+        songUrlCache[mediaId]?.takeIf {
+            !staleCopy && downloadAudioCodec == DownloadAudioCodec.AUTO &&
+                it.second > System.currentTimeMillis()
+        }?.let {
             return@Factory dataSpec.withUri(it.first.toUri())
         }
 
@@ -197,7 +213,15 @@ class DownloadUtil @Inject constructor(
             StandIns(
                 resolve = { id ->
                     paced()
-                    YTPlayerUtils.playerResponseForPlayback(id, audioQuality = audioQuality, connectivityManager = connectivityManager)
+                    val preferredMime = downloadAudioCodec.mimePrefix
+                    val preferred = YTPlayerUtils.playerResponseForPlayback(
+                        id, audioQuality = audioQuality, connectivityManager = connectivityManager,
+                        preferredMime = preferredMime,
+                    )
+                    if (preferred.isSuccess || preferredMime == null) preferred
+                    else YTPlayerUtils.playerResponseForPlayback(
+                        id, audioQuality = audioQuality, connectivityManager = connectivityManager,
+                    )
                 },
                 wanted = { id ->
                     database.readOrNull { songRow(id) }?.let { row ->
