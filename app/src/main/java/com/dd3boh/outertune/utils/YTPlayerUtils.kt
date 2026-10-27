@@ -900,6 +900,9 @@ object YTPlayerUtils {
         /** VISIONOS gave the bot check, or answered with a url that failed the check. */
         var visionosRefused = false
 
+        /** A stream URL was returned but the HTTP check refused it (for example 403). */
+        var streamHttpRefused = false
+
         /** The chain's web client was passed over, VISIONOS being refused and a new visitorData still to be tried. */
         var webHeld = false
         var gotStream = false
@@ -1094,7 +1097,11 @@ object YTPlayerUtils {
         // Every client called this song gone, and another before it with nothing served between:
         // taken for the connection, and given the same try as the bot check (see goneInARow).
         val goneAgain = result.exceptionOrNull() is SongUnavailable && anotherGoneBefore(videoId)
-        if (result.isSuccess || !StreamCheck.mayRetryWithNewVisitor(first.visionosRefused || goneAgain, sinceFailedSwap)) {
+        // A 403 from a returned stream URL is evidence of an expired/denied URL,
+        // not proof that the recording vanished. Retry once with fresh visitorData
+        // even for the first affected song, before reporting it unavailable.
+        val refusedStream = result.isFailure && first.streamHttpRefused
+        if (result.isSuccess || !StreamCheck.mayRetryWithNewVisitor(first.visionosRefused || goneAgain || refusedStream, sinceFailedSwap)) {
             noteOutcome(videoId, result)
             return result to first
         }
@@ -1899,6 +1906,7 @@ object YTPlayerUtils {
                 }
                 if (!isTrial) {
                     refusedStatus = status
+                    notes.streamHttpRefused = true
                     if (isVisionos) notes.visionosRefused = true
                 }
                 streamUrl = null
