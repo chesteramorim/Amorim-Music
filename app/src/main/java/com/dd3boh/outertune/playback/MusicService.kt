@@ -1228,7 +1228,7 @@ class MusicService : MediaLibraryService(),
             }
 
             dataStore.data
-                .map { it[SkipSilenceKey] ?: false }
+                .map { it[SkipSilenceKey] ?: true }
                 .distinctUntilChanged()
                 .collectLatest(scope) {
                     withContext(Dispatchers.Main) {
