@@ -286,6 +286,9 @@ fun AddToPlaylistDialog(
                         val playlist = selectedPlaylist!!
                         val ids = songIds!!
                         database.transaction { addSongToPlaylist(playlist, ids) }
+                        // Keep this path consistent with normal adds and "skip duplicates":
+                        // including an existing song must still enqueue its offline download.
+                        queuePlaylistDownloads(ids)
                         onAdded?.invoke(playlist)
                         pushToYouTube(playlist, ids)
                     }
