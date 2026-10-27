@@ -3020,7 +3020,10 @@ class MusicService : MediaLibraryService(),
                                 // spatial stages is ever on. The equalizer comes straight after the
                                 // gain, so spatial audio is handed the curve the listener chose.
                                 arrayOf(gainProcessor, equalizerProcessor, binauralProcessor, spatialUpmixProcessor),
-                                SilenceSkippingAudioProcessor(),
+                                // Conservative mode: require a sustained quiet section before shortening it,
+                                // retain half of each quiet interval (up to 2 seconds), and use a
+                                // lower threshold to protect soft introductions and musical pauses.
+                                SilenceSkippingAudioProcessor(750_000L, 0.5f, 2_000_000L, 10, 512.toShort()),
                                 SonicAudioProcessor()
                             )
                         )
@@ -3062,7 +3065,10 @@ class MusicService : MediaLibraryService(),
                                 // spatial stages is ever on. The equalizer comes straight after the
                                 // gain, so spatial audio is handed the curve the listener chose.
                                 arrayOf(gainProcessor, equalizerProcessor, binauralProcessor, spatialUpmixProcessor),
-                                SilenceSkippingAudioProcessor(),
+                                // Conservative mode: require a sustained quiet section before shortening it,
+                                // retain half of each quiet interval (up to 2 seconds), and use a
+                                // lower threshold to protect soft introductions and musical pauses.
+                                SilenceSkippingAudioProcessor(750_000L, 0.5f, 2_000_000L, 10, 512.toShort()),
                                 SonicAudioProcessor()
                             )
                         )
