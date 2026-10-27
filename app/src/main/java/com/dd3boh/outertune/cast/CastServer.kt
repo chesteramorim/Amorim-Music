@@ -242,6 +242,12 @@ class CastServer(
                 if (!socket.isClosed) Log.w(TAG, "Accept failed", e)
                 break
             }
+            // accept() can return a socket just as stop() closes the listener.
+            // Do not hand that late connection to a worker after the session ended.
+            if (!isRunning || socket.isClosed) {
+                runCatching { client.close() }
+                break
+            }
             val connection = Connection(client)
             if (!admit(connection)) {
                 // As many from this address as any one receiver needs. One of its own that has
@@ -341,6 +347,9 @@ class CastServer(
     private fun serve(connection: Connection) {
         val client = connection.socket
         try {
+            // A worker accepted immediately before stop() must not serve a request
+            // after the session has been torn down.
+            if (!isRunning) return
             client.tcpNoDelay = true
             val now = System.nanoTime()
             val input = DeadlineInput(client, now + headTimeoutMs * 1_000_000L, firstByteBy = now + firstByteTimeoutMs * 1_000_000L)
