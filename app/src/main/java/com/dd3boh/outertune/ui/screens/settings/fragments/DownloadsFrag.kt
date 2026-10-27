@@ -178,6 +178,7 @@ fun ColumnScope.DownloadsFrag() {
             }
         }
     )
+    Spacer(Modifier.size(8.dp))
     InfoLabel("A opção Máxima usa a melhor qualidade disponível, inclusive pela internet do celular. A qualidade depende da música e da fonte.")
     Spacer(Modifier.size(12.dp))
 
@@ -196,6 +197,7 @@ fun ColumnScope.DownloadsFrag() {
             }
         }
     )
+    Spacer(Modifier.size(8.dp))
     EnumListPreference(
         title = { Text("Formato das músicas baixadas") },
         icon = { Icon(Icons.Rounded.HighQuality, null) },
@@ -209,6 +211,7 @@ fun ColumnScope.DownloadsFrag() {
             }
         }
     )
+    Spacer(Modifier.size(8.dp))
     InfoLabel("O aplicativo tenta usar o formato escolhido. Se não estiver disponível, escolhe outro automaticamente. Para mudar uma música já baixada, apague o download e baixe novamente.")
     Spacer(Modifier.size(12.dp))
 
@@ -224,6 +227,7 @@ fun ColumnScope.DownloadsFrag() {
             downloadUtil.setDownloadRequirements(it)
         }
     )
+    Spacer(Modifier.size(12.dp))
 
     EnumListPreference(
         modifier = Modifier.tourTarget(Tour.SETTING_LIKED_AUTODOWNLOAD),
