@@ -1050,7 +1050,7 @@ class MusicService : MediaLibraryService(),
                 })
 
                 // misc
-                setOffloadEnabled(dataStore.get(AudioOffloadKey, false))
+                setOffloadEnabled(dataStore.get(AudioOffloadKey, false) && !dataStore.get(SkipSilenceKey, true))
             }
         player = exoPlayer
         if (Unreleased.CASTING) {
@@ -1233,6 +1233,9 @@ class MusicService : MediaLibraryService(),
                 .collectLatest(scope) {
                     withContext(Dispatchers.Main) {
                         exoPlayer.skipSilenceEnabled = it
+                        // Hardware offload bypasses Media3's PCM silence processor.
+                        // Re-evaluate offload whenever the user changes this setting.
+                        applyOffload()
                     }
                 }
 
@@ -2401,7 +2404,7 @@ class MusicService : MediaLibraryService(),
      * changes.
      */
     private fun applyOffload() {
-        val needsOffloadOff = spatialUpmixProcessor.enabled || binauralProcessor.enabled || transitionFade.enabled
+        val needsOffloadOff = spatialUpmixProcessor.enabled || binauralProcessor.enabled || transitionFade.enabled || dataStore.get(SkipSilenceKey, true)
         exoPlayer.setOffloadEnabled(!needsOffloadOff && dataStore.get(AudioOffloadKey, false))
     }
 
