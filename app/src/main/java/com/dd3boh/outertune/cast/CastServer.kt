@@ -190,9 +190,12 @@ class CastServer(
             runCatching { socket.close() }
             loopbackSocket?.let { runCatching { it.close() } }
             loopbackSocket = null
+            // Close accepted sockets before interrupting workers. An accept loop may
+            // still be exiting, so sweep again after shutdown to catch late arrivals.
+            connections.forEach { runCatching { it.socket.close() } }
+            workers?.shutdownNow()
             connections.forEach { runCatching { it.socket.close() } }
             connections.clear()
-            workers?.shutdownNow()
             workers = null
             refusals?.shutdownNow()
             refusals = null
